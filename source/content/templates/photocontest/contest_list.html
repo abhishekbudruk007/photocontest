@@ -1,0 +1,132 @@
+{% extends 'layouts/default/page.html' %}
+{% load static %}
+{% load i18n %}
+{% block theme-css %}
+	<!--This is limitless datatable-->
+	<script src="{% static 'global_assets/js/plugins/tables/datatables/datatables.min.js' %}"></script>
+
+
+	<!--Datepicker Imports-->
+
+	<script src="{% static 'global_assets/js/demo_pages/datatables_extension_colvis.js' %}"></script>
+
+    <!--Django-Modal-form-->
+        <script src="{% static 'js/jquery.bootstrap.modal.forms.js' %}"></script>
+        <script src="{% static 'js/jquery.bootstrap.modal.forms.min.js' %}"></script>
+    <!--/Django-Modal-Forms-->
+
+
+{% endblock %}
+{% block content %}
+
+<script>
+
+
+	var offset = new Date().getTimezoneOffset();
+	offset = -offset;
+        $( document ).ready(function() {
+
+
+            var loadstatus = LoadData();
+            if (loadstatus){
+                $('#contestlist').on('mouseover', '.participate', function(){
+							$(this).modalForm({formURL: $(this).data('id')}) });
+                }
+		});
+
+        function LoadData()
+        {
+			var table= $('#contestlist').DataTable( {
+							lengthMenu: [ [10,25,50,100,-1], [10,25,50,100,"All"] ],
+							"bJQueryUI": true,
+                             "buttons": {
+                                    dom: {
+                                        button: {
+                                            className: 'btn btn-light'
+                                        }
+                                    },
+                             },
+
+							buttons:[ { extend: 'colvis', className: 'dt-button buttons-collection buttons-colvis btn bg-blue btn-icon dropdown-toggle' } ,
+                                    { extend: 'copy', className: 'btn btn-light buttons-copy buttons-html5' },
+                                     { extend: 'excel', className: 'btn btn-light buttons-copy buttons-html5' },
+                                     { extend: 'csv', className: 'btn btn-light buttons-copy buttons-html5' },
+                                     { extend: 'print', className: 'btn btn-light buttons-copy buttons-html5' },
+                            ],
+						   "select": true,
+                           "destroy": true,
+                           "processing": true,
+                           "serverSide": true,
+                           "aaSorting": [],
+                           "ajax": "{% url 'photocontest:contest_list' %}",
+
+                           language: {
+                                search: "",
+                                searchPlaceholder: "Filter"
+                            },
+							"aoColumnDefs":[
+                   				{
+								"aTargets": [1], //Columns containing UTC time
+								"mRender": function(data, type, full){
+									if(data){
+										var new_time = moment(data);
+										console.log("New Time",new_time.format('MM/DD/YYYY'));
+										console.log("New Time",new_time.format('MM/DD/YYYY'));
+										new_timezone_time = new_time.format('LL');
+										return new_timezone_time;
+									}
+									return "";
+								 }
+                   				}
+
+               				 ]
+
+                        });
+			return true;
+        }
+
+		$("#contestlist thead select").on( 'change', function () {
+            table
+                .column( $(this).parent().index()+':visible' )
+                .search( this.value )
+                .draw();
+        } );
+</script>
+
+    {% if request.user.is_authenticated %}
+
+        {% trans 'Welcome' %} <b>{{ request.user.username }}</b>.
+
+    {% else %}
+
+        {% trans 'You are a guest.' %}
+
+    {% endif %}
+
+    {% include "main/_modal.html" %}
+
+    <div class="card">
+
+        <br>
+        <br>
+        <div class="card-header header-elements-inline">
+            <h5 class="card-title">Contest Template</h5>
+        </div>
+
+        <table class="table table-bordered table-hover  datatable-highlight datatable-button-html5-basic" id="contestlist">
+            <thead>
+                <tr>
+                    <th >Contest Name</th>
+                    <th >Last Date</th>
+                    <th class="no-sort"> Actions </th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+
+
+
+	</div>
+
+{% endblock %}
