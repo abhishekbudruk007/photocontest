@@ -4,7 +4,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from braces.views import GroupRequiredMixin
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import Contest ,Participants
+from .models import Contest ,Participants ,Likes,Winner
 from django_datatables_view.base_datatable_view import BaseDatatableView
 from .serializers import ContestSerializer,ParticipantsSerializer,WinnerSerializer
 from datetime import datetime
@@ -13,9 +13,14 @@ from .forms import ParticipantForm
 from django.urls import reverse_lazy
 from bootstrap_modal_forms.mixins import PassRequestMixin, DeleteMessageMixin
 from django.urls import reverse
+from rest_framework import generics
 #This is to get Template for Search vehicles
 from django.http import HttpResponseRedirect
 from django.contrib import messages
+from django.http import HttpResponse
+from rest_framework.views import APIView
+from django.contrib.auth.models import User
+import json
 class ContestTemplate(generic.TemplateView):
     template_name = "photocontest/contest_list.html"
 
@@ -121,6 +126,33 @@ class ContestList(BaseDatatableView):
     #
     #     return qs
 
+class LikeApi(APIView):
+
+    def post(self,request):
+        userid = request.POST.get('userid')
+        contestid = request.POST.get('contestid')
+        participatedid = request.POST.get('participatedid')
+        print("Userid",userid)
+        userobject = User.objects.filter(id=userid)[0]
+        print("contestid",contestid)
+        contestobject = Contest.objects.filter(id=contestid)[0]
+        print("participatedid",participatedid)
+        participateobject = Participants.objects.filter(id=participatedid)[0]
+
+        if Likes.objects.filter(participant_id_id=participatedid, participant_contest_id=contestid,participant_user__in=userid).exists():
+            message = "Your have already Voted for {}".format(contestobject.contest_name)
+            return HttpResponse(json.dumps({"status": "failed", "message": message}), content_type="application/json")
+        else:
+            if Likes.objects.filter(participant_id_id=participatedid,participant_contest_id=contestid).exists():
+                print("Exists")
+                likes = Likes.objects.filter(participant_id_id=participatedid,participant_contest_id=contestid)[0]
+                likes.participant_user.add(userobject)
+            else:
+                print("Does Not Exists")
+                obj = Likes.objects.create(participant_id=participateobject,participant_contest=contestobject)
+                obj.participant_user.add(userobject)
+            message = "Your Vote is Submitted for {}".format(contestobject)
+            return HttpResponse(json.dumps({"status":"success","message":message}), content_type="application/json")
 
 class Participate(LoginRequiredMixin,PassRequestMixin, SuccessMessageMixin,generic.CreateView):
     model = Participants

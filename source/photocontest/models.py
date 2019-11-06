@@ -26,8 +26,13 @@ class Participants(BaseModel):
                                         processors=[ResizeToFill(150, 100)],
                                         format='PNG',
                                         options={'quality': 60})
-    like = models.IntegerField(default=0)
-    dislike = models.IntegerField(default=0)
+
+
+class Likes(BaseModel):
+    participant_id = models.ForeignKey(Participants, on_delete=models.CASCADE)
+    participant_contest = models.ForeignKey(Contest, on_delete=models.CASCADE)
+    participant_user = models.ManyToManyField(User)
+
 
 
 class Winner(BaseModel):

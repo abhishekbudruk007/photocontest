@@ -10,6 +10,7 @@ app_name = 'photocontest'
 urlpatterns = [
     #Api for Datatable Creation View
     path('contest_list', views.ContestList.as_view(), name='contest_list'),
+    path('likeapi/', views.LikeApi.as_view(), name='like'),
     #Template for Upcoming Contests View
     path('contest_template/', views.ContestTemplate.as_view(), name='contest_template'),
     #Participate in contest View
