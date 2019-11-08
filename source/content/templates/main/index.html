@@ -7,7 +7,7 @@
 
     {% if request.user.is_authenticated %}
 
-        {% trans 'Welcome' %} <b>{{ request.user.username }}</b>.
+        {% trans 'Welcome' %} <b>{{ request.user.username }}  {{ request.user.is_staff }}  </b>.
 
     {% else %}
 
@@ -23,19 +23,25 @@
           <div class="row">
               {% for object in participants %}
             <div class="col-sm-6 col-md-4">
-              <div class="card" >
+              <div class="card" style="bottom:5px;">
                   <br>
                   <h3 class="text-center"> {{ object.participant_contest.contest_name }}</h3>
                   <img src="{{ object.photo.url }}" class="card-img-top" alt="No Image Found" width="100%" height="300">
                   <div class="card-body">
                     <h5 class="card-title">{{ object.participant_user.first_name  }} {{ object.participant_user.last_name  }}</h5>
                     {% if request.user.is_authenticated %}
-                        <div class="likebuttons" style="display:inline-block;">
-                            <button id="likebutton{{ object.id }}" onclick="actionlikebutton({{ request.user.id }},{{object.participant_contest.id}},{{object.id}})" class="btn btn-primary">Like</button>
-                        </div>
+                        {% if request.user.is_superuser %}
+                            <div class="likebuttons" style="display:inline-block;">
+                                <a href="#" class="btn btn-danger">Delete</a>
+                            </div>
+                        {% else %}
+                            <div class="likebuttons" style="display:inline-block;">
+                                <button id="likebutton{{ object.id }}" onclick="actionlikebutton({{ request.user.id }},{{object.participant_contest.id}},{{object.id}})" class="btn btn-primary">Vote</button>
+                            </div>
+                        {% endif %}
 
                     {% else %}
-                        <a href="{% url 'accounts:log_in' %}" class="btn btn-primary">Login To Vote</a>
+                         <a href="{% url 'accounts:log_in' %}" class="btn btn-primary">Login To Vote</a>
                     {% endif %}
                   </div>
               </div>
@@ -53,10 +59,8 @@
         function actionlikebutton(userid,contestid,participatedid)
         {
             var token = "{{ csrf_token }}";
-            if( $('#likebutton'+participatedid).html() == "Like" )
+            if( $('#likebutton'+participatedid).html() == "Vote" )
             {
-
-
                  $.ajax({
                   type:"POST",
                   headers: {'X-CSRFToken':token},
@@ -84,7 +88,7 @@
             }
             else
             {
-                $('#likebutton'+participatedid).html('Like');
+                $('#likebutton'+participatedid).html('Vote');
             }
         }
 

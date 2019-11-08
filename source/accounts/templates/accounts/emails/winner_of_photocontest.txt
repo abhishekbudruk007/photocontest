@@ -1,0 +1,5 @@
+{% load i18n %}
+
+
+
+{{ likesobject.photocontest_id.participant_user.username }}

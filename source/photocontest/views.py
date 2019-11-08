@@ -14,12 +14,12 @@ from django.urls import reverse_lazy
 from bootstrap_modal_forms.mixins import PassRequestMixin, DeleteMessageMixin
 from django.urls import reverse
 from rest_framework import generics
-#This is to get Template for Search vehicles
 from django.http import HttpResponseRedirect
 from django.contrib import messages
 from django.http import HttpResponse
 from rest_framework.views import APIView
 from django.contrib.auth.models import User
+from django.db.models import Q
 import json
 class ContestTemplate(generic.TemplateView):
     template_name = "photocontest/contest_list.html"
@@ -34,7 +34,7 @@ class ContestList(BaseDatatableView):
 
     def get_initial_queryset(self):
         #This query ( Select 8 from Contest order-by created_at DESC;)
-        qs=Contest.objects.filter().order_by("-created_at")
+        qs=Contest.objects.filter(contest_lastdate__gt=datetime.now()).order_by("-created_at")
         return qs
 
     # This function is used to manually change the columns
@@ -42,89 +42,22 @@ class ContestList(BaseDatatableView):
         # We want to render filename as a custom column
         if column == 'contest_name':
             return (row.contest_name).upper()
-        elif column == 'entrydate':
-            return '%s' % row.intime.isoformat()# .strftime('%Y-%m-%d %H:%M:%S')
+        elif column == 'contest_lastdate':
+            return '%s' % row.contest_lastdate.isoformat()# .strftime('%Y-%m-%d %H:%M:%S')
         elif column == 'action':
             return '<a href="#" class="participate"  data-id="' + str(row.id) + '/participate/"><i class="icon-pencil"></i>Participate</a>'
         else:
             return super(ContestList, self).render_column(row, column)
 
 
-    # def filter_queryset(self, qs):
-    #     # print("Query Set",qs)
-    #     search = self.request.GET.get(u'search[value]', None)
-    #     print("Search", search)
-    #     if search:
-    #         if (search.lower() == "valid"):
-    #             valid_search = True
-    #             qs = qs.filter(
-    #                 Q(brand__icontains=search) | Q(color__icontains=search) | Q(client_name__icontains=search) | Q(
-    #                     plate_no__icontains=search) | Q(m_type__icontains=search) | Q(
-    #                     vehical_type__icontains=search) | Q(valid=valid_search))
-    #         elif(search.lower() == "invalid"):
-    #             valid_search = False
-    #             qs = qs.filter(
-    #                 Q(brand__icontains=search) | Q(color__icontains=search) | Q(client_name__icontains=search) | Q(
-    #                     plate_no__icontains=search) | Q(m_type__icontains=search) | Q(
-    #                     vehical_type__icontains=search) | Q(valid=valid_search))
-    #         else:
-    #             qs = qs.filter(
-    #                 Q(brand__icontains=search) | Q(color__icontains=search) | Q(client_name__icontains=search) | Q(
-    #                     plate_no__icontains=search) | Q(m_type__icontains=search) | Q(
-    #                     vehical_type__icontains=search))
-    #
-    #         print("Query Set 0", qs)
-    #
-    #     select_search_client_name = self.request.GET.get('columns[1][search][value]')
-    #     print("select_search_client_name Search", select_search_client_name)
-    #     if select_search_client_name:
-    #         qs = qs.filter(Q(client_name__icontains=select_search_client_name))
-    #         print("Query Set 1", qs)
-    #
-    #     select_search_vehicle = self.request.GET.get('columns[7][search][value]')
-    #     print("select_search_vehicle Search", select_search_vehicle)
-    #     if select_search_vehicle:
-    #         qs = qs.filter(Q(plate_no__icontains=select_search_vehicle))
-    #         print("Query Set 6", qs)
-    #
-    #     select_search_brand = self.request.GET.get('columns[8][search][value]')
-    #     print("select_search_brand Search", select_search_brand)
-    #     if(select_search_brand == "UNKNOWN"):
-    #         select_search_brand = "Not Found"
-    #     print("select_search_brand Search UNKNOWN", select_search_brand)
-    #     if select_search_brand:
-    #         qs = qs.filter(Q(brand__icontains=select_search_brand))
-    #         print("Query Set 7", qs)
-    #
-    #     select_search_color = self.request.GET.get('columns[9][search][value]')
-    #     print("select_search_color Search", select_search_color)
-    #     if select_search_color:
-    #         qs = qs.filter(Q(color__icontains=select_search_color))
-    #         print("Query Set 8", qs)
-    #
-    #     select_search_vehicle_type = self.request.GET.get('columns[12][search][value]')
-    #     print("select_search_vehicle_type Search", select_search_vehicle_type)
-    #     if select_search_vehicle_type:
-    #         qs = qs.filter(Q(vehical_type__icontains=select_search_vehicle_type))
-    #         print("Query Set 11", qs)
-    #
-    #     select_search_member_type = self.request.GET.get('columns[13][search][value]')
-    #     print("select_search_member_type Search", select_search_member_type)
-    #     if select_search_member_type:
-    #         qs = qs.filter(Q(m_type__icontains=select_search_member_type))
-    #         print("Query Set 12", qs)
-    #
-    #     select_search_valid = self.request.GET.get('columns[14][search][value]')
-    #     print("select_search_valid Search", select_search_valid)
-    #     if select_search_valid:
-    #         if select_search_valid.lower() == "valid":
-    #             valid_search = True
-    #         else:
-    #             valid_search = False
-    #         qs = qs.filter(Q(valid=valid_search))
-    #         print("Query Set 12", qs)
-    #
-    #     return qs
+    def filter_queryset(self, qs):
+        # print("Query Set",qs)
+        search = self.request.GET.get(u'search[value]', None)
+        print("Search", search)
+        if search:
+            qs = qs.filter(Q(contest_name__icontains=search))
+            print("Query Set filter 0", qs)
+        return qs
 
 class LikeApi(APIView):
 
@@ -166,13 +99,18 @@ class Participate(LoginRequiredMixin,PassRequestMixin, SuccessMessageMixin,gener
         user_object = self.request.user
         contest_object = Contest.objects.filter(id__iexact=self.kwargs["pk"])[0]
         print("contest_object",contest_object)
-        self.model = Participants()
-        self.model.participant_user = user_object
-        self.model.participant_contest = contest_object
-        self.model.photo = self.request.FILES['photo']
-        self.model.save()
-        print("Participate Model Saved")
-        messages.success(self.request, f'You have successfully participated in contest '+str(contest_object.id))
+        already_exists = Participants.objects.filter(participant_user=user_object,participant_contest=contest_object)
+        print("Already Exists")
+        if(len(already_exists)>0):
+            messages.error(self.request, f'You have already participated earlier in contest '+str(contest_object.id))
+        else:
+            self.model = Participants()
+            self.model.participant_user = user_object
+            self.model.participant_contest = contest_object
+            self.model.photo = self.request.FILES['photo']
+            self.model.save()
+            print("Participate Model Saved")
+            messages.success(self.request, f'You have successfully participated in contest '+str(contest_object.id))
         return HttpResponseRedirect(self.get_success_url())
 
     def form_invalid(self, form):
