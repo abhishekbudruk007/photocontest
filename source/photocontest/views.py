@@ -73,7 +73,7 @@ class LikeApi(APIView):
         participateobject = Participants.objects.filter(id=participatedid)[0]
 
         if Likes.objects.filter(participant_id_id=participatedid, participant_contest_id=contestid,participant_user__in=userid).exists():
-            message = "Your have already Voted for {}".format(contestobject.contest_name)
+            message = "Your have already Voted for {0} {1}".format(participateobject.participant_user.first_name,participateobject.participant_user.last_name)
             return HttpResponse(json.dumps({"status": "failed", "message": message}), content_type="application/json")
         else:
             if Likes.objects.filter(participant_id_id=participatedid,participant_contest_id=contestid).exists():
@@ -84,7 +84,7 @@ class LikeApi(APIView):
                 print("Does Not Exists")
                 obj = Likes.objects.create(participant_id=participateobject,participant_contest=contestobject)
                 obj.participant_user.add(userobject)
-            message = "Your Vote is Submitted for {}".format(contestobject)
+            message = "Your Vote is Submitted for {0} {1}".format(participateobject.participant_user.first_name,participateobject.participant_user.last_name)
             return HttpResponse(json.dumps({"status":"success","message":message}), content_type="application/json")
 
 class Participate(LoginRequiredMixin,PassRequestMixin, SuccessMessageMixin,generic.CreateView):
@@ -102,7 +102,7 @@ class Participate(LoginRequiredMixin,PassRequestMixin, SuccessMessageMixin,gener
         already_exists = Participants.objects.filter(participant_user=user_object,participant_contest=contest_object)
         print("Already Exists")
         if(len(already_exists)>0):
-            messages.error(self.request, f'You have already participated earlier in contest '+str(contest_object.id))
+            messages.error(self.request, f'You have already participated earlier in the contest '+str(contest_object.contest_name))
         else:
             self.model = Participants()
             self.model.participant_user = user_object
@@ -110,7 +110,7 @@ class Participate(LoginRequiredMixin,PassRequestMixin, SuccessMessageMixin,gener
             self.model.photo = self.request.FILES['photo']
             self.model.save()
             print("Participate Model Saved")
-            messages.success(self.request, f'You have successfully participated in contest '+str(contest_object.id))
+            messages.success(self.request, f'You have successfully participated in the contest '+str(contest_object.contest_name))
         return HttpResponseRedirect(self.get_success_url())
 
     def form_invalid(self, form):
