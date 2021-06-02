@@ -26,7 +26,7 @@ lib==3.0.0
 libsass==0.14.0
 lxml==4.4.1
 Markdown==2.6.11
-markdown2==2.3.5
+markdown2==2.4.0
 mysqlclient==1.4.4
 oauthlib==3.1.0
 pilkit==2.0
